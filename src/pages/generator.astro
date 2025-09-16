@@ -1,86 +1,64 @@
 ---
-
+import Layout from "../layouts/Layout.astro";
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SVG Generator</title>
-  </head>
-  <body class="min-h-screen bg-gray-50 text-gray-800">
-    <main class="max-w-5xl mx-auto p-6 space-y-6">
-      <h1 class="text-2xl font-bold">SVG Generator</h1>
+<Layout>
+  <main class="max-w-5xl mx-auto p-6 space-y-6">
+    <h1 class="text-2xl font-bold">SVG Generator</h1>
 
-      <!-- Zone prompt -->
-      <div class="flex gap-2">
-        <textarea
-          id="user-prompt"
-          class="textarea textarea-bordered flex-1"
-          placeholder="Ex: a red car"></textarea>
-        <button id="generate-button" class="btn btn-primary">Generate</button>
+    <!-- Zone prompt -->
+    <div class="flex gap-2">
+      <textarea
+        id="user-prompt"
+        class="textarea textarea-bordered flex-1"
+        placeholder="Ex: a red car"></textarea>
+      <button id="generate-button" class="btn btn-primary">Generate</button>
+    </div>
+
+    <!-- Zone d’affichage -->
+    <div class="grid md:grid-cols-2 gap-4">
+      <pre
+        id="svg-output"
+        class="bg-gray-100 p-3 rounded overflow-auto text-xs h-80">// The generated SVG code will appear here…</pre>
+      <div
+        id="svg-container"
+        class="bg-white border rounded flex items-center justify-center h-80"
+      >
+        <span class="text-gray-400">The SVG will be rendered here</span>
       </div>
+    </div>
+  </main>
+</Layout>
+<script>
+  //@ts-nocheck
 
-      <!-- Zone d’affichage -->
-      <div class="grid md:grid-cols-2 gap-4">
-        <pre
-          id="svg-output"
-          class="bg-gray-100 p-3 rounded overflow-auto text-xs h-80">// The generated SVG code will appear here…</pre>
-        <div
-          id="svg-container"
-          class="bg-white border rounded flex items-center justify-center h-80"
-        >
-          <span class="text-gray-400">The SVG will be rendered here</span>
-        </div>
-      </div>
-    </main>
+  async function generateSVG(prompt) {
+    console.log("Generating SVG for prompt:", prompt);
+    const res = await fetch("/api/generateSVG", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt }),
+    });
+    const data = await res.json();
+    return data.svg;
+  }
 
-    <script>
-      async function generateSVG(prompt) {
-        const res = await fetch("/api/generateSVG", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt }),
-        });
-        const data = await res.json();
-        return data.svg;
-      }
-
-      async function handleSubmit() {
-        const promptEl = document.getElementById("user-prompt") as HTMLTextAreaElement | null;
-        const svgOutput = document.getElementById("svg-output") as HTMLElement | null;
-        const svgContainer = document.getElementById("svg-container") as HTMLElement | null;
-        const generateButton = document.getElementById("generate-button") as HTMLButtonElement | null;
-
-        if (!promptEl) return;
-        const prompt = promptEl.value.trim();
-        if (!prompt) return;
-
-        if (svgContainer) {
-          svgContainer.innerHTML = `<span class="loading loading-ring loading-lg"></span>`;
-        }
-        if (generateButton) {
-          generateButton.disabled = true;
-        }
-
-        const svgCode = await generateSVG(prompt);
-
-        if (svgOutput) {
-          svgOutput.textContent = svgCode || "// No SVG generated";
-        }
-        if (svgContainer) {
-          svgContainer.innerHTML =
-            svgCode || "<span class='text-gray-400'>No SVG generated</span>";
-        }
-
-        if (generateButton) {
-          generateButton.disabled = false;
-        }
-      }
-
-      document
-        .getElementById("generate-button")
-        ?.addEventListener("click", handleSubmit);
-    </script>
-  </body>
-</html>
+  async function handleSubmit() {
+    let prompt = "";
+    let svgCode = "";
+    const promptElement = document.getElementById("user-prompt");
+    prompt = promptElement ? promptElement.value : "";
+    console.log("submitted: ", prompt); // message affiché sur votre console d'inspecteur dans le navigateur
+    const svgContainer = document.getElementById("svg-container");
+    let svgOutput = document.getElementById("svg-output");
+    svgCode = await generateSVG(prompt);
+    console.log("svgCode: ", svgCode);
+    svgOutput.textContent = svgCode;
+    svgContainer.innerHTML = svgCode;
+    generateButton.disabled = false;
+  }
+  const generateButton = document.getElementById("generate-button");
+  if (generateButton) {
+    generateButton.addEventListener("click", handleSubmit);
+  }
+</script>

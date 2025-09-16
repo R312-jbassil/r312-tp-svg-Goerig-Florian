@@ -3,7 +3,7 @@ import { OpenAI } from "openai";
 
 const HF_TOKEN = import.meta.env.HF_TOKEN;
 const HF_URL = import.meta.env.HF_URL;
-const MODEL = "meta-llama/Llama-3.1-8B-Instruct"; // choisis ton modèle préféré
+const MODEL = "meta-llama/Llama-3.1-8B-Instruct:novita"; // choisis ton modèle préféré
 
 export const POST = async ({ request }) => {
     try {
