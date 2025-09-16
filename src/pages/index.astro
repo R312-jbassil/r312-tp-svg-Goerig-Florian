@@ -6,8 +6,14 @@ import Layout from "../layouts/Layout.astro";
   <div class="min-h-screen flex items-center justify-center">
     <div class="text-center space-y-6">
       <h1 class="text-4xl font-bold">Welcome to SVG Generator</h1>
-      <p class="text-lg opacity-90">Create and render SVGs from prompts.</p>
-      <a href="/generator" class="btn btn-primary"> Go to SVG Generator </a>
+      <p class="text-lg opacity-90">
+        Create and render SVGs from prompts. Save them to your gallery.
+      </p>
+
+      <div class="flex items-center justify-center gap-3">
+        <a href="/generator" class="btn btn-primary"> Go to SVG Generator </a>
+        <a href="/gallery" class="btn"> Open Gallery </a>
+      </div>
     </div>
   </div>
 </Layout>
