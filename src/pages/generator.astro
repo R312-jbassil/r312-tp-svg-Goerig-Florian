@@ -13,6 +13,7 @@ import Layout from "../layouts/Layout.astro";
         class="textarea textarea-bordered flex-1"
         placeholder="Ex: a red car"></textarea>
       <button id="generate-button" class="btn btn-primary">Generate</button>
+      <button id="save-button" class="btn btn-secondary">Save</button>
     </div>
 
     <!-- Zone d’affichage -->
@@ -29,9 +30,11 @@ import Layout from "../layouts/Layout.astro";
     </div>
   </main>
 </Layout>
+
 <script>
   //@ts-nocheck
 
+  // --- Appel API HuggingFace ---
   async function generateSVG(prompt) {
     console.log("Generating SVG for prompt:", prompt);
     const res = await fetch("/api/generateSVG", {
@@ -43,22 +46,66 @@ import Layout from "../layouts/Layout.astro";
     return data.svg;
   }
 
+  // --- Bouton Generate ---
   async function handleSubmit() {
-    let prompt = "";
-    let svgCode = "";
     const promptElement = document.getElementById("user-prompt");
-    prompt = promptElement ? promptElement.value : "";
-    console.log("submitted: ", prompt); // message affiché sur votre console d'inspecteur dans le navigateur
+    const generateButton = document.getElementById("generate-button");
     const svgContainer = document.getElementById("svg-container");
-    let svgOutput = document.getElementById("svg-output");
-    svgCode = await generateSVG(prompt);
-    console.log("svgCode: ", svgCode);
-    svgOutput.textContent = svgCode;
-    svgContainer.innerHTML = svgCode;
-    generateButton.disabled = false;
+    const svgOutput = document.getElementById("svg-output");
+
+    const prompt = promptElement?.value.trim();
+    if (!prompt) return;
+
+    // Reset affichage + état bouton
+    svgOutput.textContent = "// Generating SVG, please wait...";
+    svgContainer.innerHTML = `<span class="loading loading-ring loading-lg"></span>`;
+    generateButton.disabled = true;
+
+    try {
+      const svgCode = await generateSVG(prompt);
+      console.log("svgCode: ", svgCode);
+
+      svgOutput.textContent = svgCode || "// No SVG generated";
+      svgContainer.innerHTML =
+        svgCode || "<span class='text-gray-400'>No SVG generated</span>";
+    } catch (err) {
+      console.error(err);
+      svgOutput.textContent = "// Error while generating SVG";
+      svgContainer.innerHTML =
+        "<span class='text-red-500'>Error generating SVG</span>";
+    } finally {
+      generateButton.disabled = false;
+    }
   }
-  const generateButton = document.getElementById("generate-button");
-  if (generateButton) {
-    generateButton.addEventListener("click", handleSubmit);
+
+  // --- Bouton Save ---
+  async function saveSVG() {
+    const svgCode = document.getElementById("svg-output").textContent.trim();
+    if (!svgCode || svgCode.startsWith("//")) {
+      alert("No SVG to save!");
+      return;
+    }
+
+    const name = prompt("Enter a name for this SVG:");
+    if (!name) return;
+
+    const res = await fetch("/api/saveSVG", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, code: svgCode }),
+    });
+
+    if (res.ok) {
+      alert("✅ SVG saved!");
+    } else {
+      alert("❌ Error saving SVG");
+    }
   }
+
+  // --- Event listeners ---
+  document
+    .getElementById("generate-button")
+    ?.addEventListener("click", handleSubmit);
+
+  document.getElementById("save-button")?.addEventListener("click", saveSVG);
 </script>
