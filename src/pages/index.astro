@@ -1,25 +1,13 @@
 ---
-
+import Layout from "../layouts/Layout.astro";
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SVG Generator</title>
-  </head>
-  <body
-    class="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-600 text-white"
-  >
+<Layout>
+  <div class="min-h-screen flex items-center justify-center">
     <div class="text-center space-y-6">
       <h1 class="text-4xl font-bold">Welcome to SVG Generator</h1>
       <p class="text-lg opacity-90">Create and render SVGs from prompts.</p>
-      <a
-        href="/generator"
-        class="btn btn-primary bg-pink-500 border-0 hover:bg-pink-600"
-      >
-        Go to SVG Generator
-      </a>
+      <a href="/generator" class="btn btn-primary"> Go to SVG Generator </a>
     </div>
-  </body>
-</html>
+  </div>
+</Layout>
