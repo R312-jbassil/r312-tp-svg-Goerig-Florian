@@ -2,13 +2,8 @@
 import Layout from "../layouts/Layout.astro";
 import PocketBase from "pocketbase";
 
-// ⚠️ adapte l'URL si ton PocketBase n'est pas en local
-const pb = new PocketBase("http://127.0.0.1:8090");
-
-// récupère tous les enregistrements de la collection "svgs"
-const records = await pb.collection("svgs").getFullList({
-  sort: "-created",
-});
+const pb = new PocketBase(import.meta.env.PB_URL || "http://127.0.0.1:8090");
+const records = await pb.collection("svgs").getFullList({ sort: "-created" });
 ---
 
 <Layout>
@@ -21,32 +16,82 @@ const records = await pb.collection("svgs").getFullList({
       </div>
     </div>
 
-    {records.length === 0 ? (
-      <div class="alert">
-        <span>No SVG saved yet. Go to the generator to create one.</span>
-      </div>
-    ) : (
-      <div class="grid md:grid-cols-2 gap-6">
-        {records.map((item) => (
-          <div class="card bg-base-100 shadow p-4 space-y-3">
-            <div class="flex items-center justify-between">
-              <h2 class="font-semibold truncate">{item.name}</h2>
-              <span class="text-xs opacity-60">{new Date(item.created).toLocaleString()}</span>
-            </div>
-
-            <!-- Rendu -->
-            <div class="border rounded p-3 overflow-auto" set:html={item.code}></div>
-
-            <!-- Code -->
-            <details class="collapse collapse-arrow bg-base-200 rounded">
-              <summary class="collapse-title text-sm font-medium">Show SVG code</summary>
-              <div class="collapse-content">
-                <pre class="text-xs bg-base-100 p-2 rounded overflow-auto">{item.code}</pre>
+    {
+      records.length === 0 ? (
+        <div class="alert">
+          <span>No SVG saved yet.</span>
+        </div>
+      ) : (
+        <div class="grid md:grid-cols-2 gap-6">
+          {records.map((item) => (
+            <div
+              class="card bg-base-100 shadow p-4 space-y-3"
+              id={`card-${item.id}`}
+            >
+              <div class="flex items-center justify-between gap-3">
+                <h2 class="font-semibold truncate">{item.name}</h2>
+                <div class="flex gap-2">
+                  <button class="btn btn-sm btn-error" data-delete={item.id}>
+                    Delete
+                  </button>
+                </div>
               </div>
-            </details>
-          </div>
-        ))}
-      </div>
-    )}
+
+              <div
+                class="border rounded p-3 overflow-auto"
+                set:html={item.code}
+              />
+
+              <details class="collapse collapse-arrow bg-base-200 rounded">
+                <summary class="collapse-title text-sm font-medium">
+                  Show SVG code
+                </summary>
+                <div class="collapse-content">
+                  <pre class="text-xs bg-base-100 p-2 rounded overflow-auto">
+                    {item.code}
+                  </pre>
+                </div>
+              </details>
+            </div>
+          ))}
+        </div>
+      )
+    }
   </main>
 </Layout>
+
+<script>
+  // suppression côté client
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-delete]");
+    if (!btn) return;
+
+    const id = btn.getAttribute("data-delete");
+    const ok = confirm("Delete this SVG?");
+    if (!ok) return;
+
+    btn.disabled = true;
+    btn.classList.add("loading");
+
+    try {
+      const res = await fetch(`/api/deleteSVG?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        console.error("Delete failed:", res.status, t);
+        alert("Error deleting SVG");
+        btn.disabled = false;
+        btn.classList.remove("loading");
+        return;
+      }
+      // retirer la carte du DOM
+      document.getElementById(`card-${id}`)?.remove();
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting SVG");
+      btn.disabled = false;
+      btn.classList.remove("loading");
+    }
+  });
+</script>
